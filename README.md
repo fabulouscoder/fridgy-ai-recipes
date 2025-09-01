@@ -1,73 +1,185 @@
-# Welcome to your Lovable project
+# Fridgy - Smart Fridge Buddy 🥗
 
-## Project info
+Turn your leftovers into delicious meals. Save money. Reduce waste. Stay healthy.
 
-**URL**: https://lovable.dev/projects/d4d5ce8c-080c-45c3-a9f9-80ea116288a7
+Fridgy is an AI-powered web application that helps users reduce food waste by generating personalized recipes from the ingredients they already have at home.
 
-## How can I edit this code?
+## 🚀 Features
 
-There are several ways of editing your application.
+### Current Features (Frontend)
+- **Modern Landing Page** - Clean, responsive design with fresh food theme
+- **Ingredient Input System** - Easy-to-use interface for entering available ingredients
+- **Recipe Results Display** - Beautiful card-based layout for recipe presentation
+- **Mobile-First Design** - Fully responsive across all devices
+- **Fresh Design System** - Custom color palette with greens and oranges
 
-**Use Lovable**
+### Planned Features (Requires Backend Integration)
+- **AI Recipe Generation** - OpenAI API integration for personalized recipe suggestions
+- **User Authentication** - Sign up/login via Supabase Auth
+- **Save Recipes** - Store favorite recipes in user profiles
+- **Recipe Management** - CRUD operations for saved recipes
+- **Nutritional Information** - Calorie and macro estimates per recipe
+- **Missing Ingredients Suggestions** - AI-powered shopping list generation
+- **Social Sharing** - Share recipes via links or social media
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d4d5ce8c-080c-45c3-a9f9-80ea116288a7) and start prompting.
+## 🛠 Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+### Frontend
+- **React 18** - Modern React with hooks
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first CSS framework
+- **Shadcn/ui** - Beautiful, accessible UI components
+- **Lucide React** - Consistent icon library
+- **Vite** - Fast development and build tool
 
-**Use your preferred IDE**
+### Backend (To be implemented)
+- **Supabase** - Database, authentication, and real-time features
+- **OpenAI API** - AI-powered recipe generation
+- **Supabase Edge Functions** - Serverless backend API
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Deployment
+- **Vercel/Netlify** - Static site hosting
+- **Supabase Cloud** - Backend-as-a-Service
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🏃‍♂️ How to Run Locally
 
-Follow these steps:
+### Prerequisites
+- Node.js 18+ and npm
+- Git
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Installation
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Clone the repository**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd fridgy
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+3. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+4. **Open in browser**
+   Navigate to `http://localhost:8080`
+
+### Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+npm run type-check   # Run TypeScript compiler check
 ```
 
-**Edit a file directly in GitHub**
+## 🎨 Design System
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Fridgy uses a custom design system with a fresh food theme:
 
-**Use GitHub Codespaces**
+- **Primary Colors**: Fresh greens for natural, healthy feeling
+- **Secondary Colors**: Warm oranges for appetizing, energetic vibe
+- **Typography**: Clean, modern fonts optimized for readability
+- **Animations**: Subtle transitions and hover effects
+- **Components**: Consistent, accessible UI components
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔧 Development
 
-## What technologies are used for this project?
+### Project Structure
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # Base UI components (shadcn)
+│   ├── Hero.tsx        # Landing page hero section
+│   ├── Features.tsx    # Features showcase
+│   ├── IngredientInput.tsx  # Recipe input form
+│   └── RecipeResults.tsx    # Recipe display cards
+├── pages/              # Page components
+├── lib/                # Utility functions
+├── hooks/              # Custom React hooks
+└── assets/             # Images and static files
+```
 
-This project is built with:
+### Adding New Features
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. **UI Components**: Add to `src/components/`
+2. **Pages**: Add to `src/pages/` and update routing in `App.tsx`
+3. **Styles**: Use Tailwind classes and design system tokens
+4. **Types**: Define in component files or `src/types/`
 
-## How can I deploy this project?
+## 🔐 Backend Integration
 
-Simply open [Lovable](https://lovable.dev/projects/d4d5ce8c-080c-45c3-a9f9-80ea116288a7) and click on Share -> Publish.
+To enable full functionality (authentication, database, AI features), connect to Supabase:
 
-## Can I connect a custom domain to my Lovable project?
+1. Click the green Supabase button in the Lovable interface
+2. Connect your Supabase account
+3. The following features will then be available:
+   - User authentication (email/password)
+   - Recipe storage and management
+   - OpenAI API integration for recipe generation
+   - User profiles and preferences
 
-Yes, you can!
+## 🚀 Deployment
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Using Lovable (Recommended)
+1. Click "Publish" in the top right of the Lovable editor
+2. Your app will be deployed automatically
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Manual Deployment
+1. **Build the project**
+   ```bash
+   npm run build
+   ```
+
+2. **Deploy to Vercel**
+   ```bash
+   npx vercel --prod
+   ```
+
+3. **Or deploy to Netlify**
+   - Connect your GitHub repository
+   - Set build command: `npm run build`
+   - Set publish directory: `dist`
+
+## 👥 Team
+
+This project was built for [Hackathon Name]. Add your team members below:
+
+### Team Members
+- **[Your Name]** - [Role] - [Email]
+- **[Team Member 2]** - [Role] - [Email]
+- **[Team Member 3]** - [Role] - [Email]
+- **[Team Member 4]** - [Role] - [Email]
+
+### Roles
+- **Frontend Developer** - React/TypeScript development
+- **UI/UX Designer** - Design system and user experience
+- **Backend Developer** - Supabase integration and APIs
+- **AI Integration Specialist** - OpenAI API integration
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📞 Support
+
+- **Documentation**: [Lovable Docs](https://docs.lovable.dev)
+- **Issues**: Create an issue in this repository
+- **Discord**: Join our [Lovable Community](https://discord.com/channels/1119885301872070706/1280461670979993613)
+
+---
+
+Built with ❤️ using [Lovable](https://lovable.dev) - The fastest way to build web applications.
