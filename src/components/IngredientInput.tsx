@@ -1,43 +1,167 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button-enhanced"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChefHat, Sparkles, Plus, X } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button-enhanced";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, X, ChefHat, Sparkles, Crown, Lock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const IngredientInput = () => {
-  const [ingredients, setIngredients] = useState<string[]>([])
-  const [currentIngredient, setCurrentIngredient] = useState("")
+  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [currentIngredient, setCurrentIngredient] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [canGenerate, setCanGenerate] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [remaining, setRemaining] = useState(3);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    checkUserAndUsage();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        checkUserAndUsage();
+      } else {
+        setUser(null);
+        setCanGenerate(false);
+        setIsPremium(false);
+        setRemaining(0);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const checkUserAndUsage = async () => {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        setUser(null);
+        setCanGenerate(false);
+        setIsPremium(false);
+        setRemaining(0);
+        return;
+      }
+
+      setUser(user);
+
+      // Check usage with edge function
+      const { data, error } = await supabase.functions.invoke('check-usage');
+      
+      if (error) {
+        console.error('Usage check error:', error);
+        // Allow generation by default if check fails
+        setCanGenerate(true);
+        setIsPremium(false);
+        setRemaining(3);
+        return;
+      }
+
+      setCanGenerate(data.canGenerate);
+      setIsPremium(data.isPremium);
+      setRemaining(data.remaining || 0);
+      
+    } catch (error) {
+      console.error('Error checking usage:', error);
+    }
+  };
 
   const addIngredient = () => {
     if (currentIngredient.trim() && !ingredients.includes(currentIngredient.trim())) {
-      setIngredients([...ingredients, currentIngredient.trim()])
-      setCurrentIngredient("")
+      setIngredients([...ingredients, currentIngredient.trim()]);
+      setCurrentIngredient("");
     }
-  }
+  };
 
   const removeIngredient = (ingredient: string) => {
-    setIngredients(ingredients.filter(i => i !== ingredient))
-  }
+    setIngredients(ingredients.filter(i => i !== ingredient));
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      addIngredient()
+      addIngredient();
     }
-  }
+  };
 
-  const handleGenerateRecipes = () => {
-    // This will be connected to the AI API once Supabase is set up
-    console.log("Generating recipes for:", ingredients)
-  }
+  // Function to handle recipe generation
+  const handleGenerateRecipes = async () => {
+    if (!user) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to generate recipes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!canGenerate && !isPremium) {
+      toast({
+        title: "Daily Limit Reached",
+        description: "You've used your 3 free recipes today. Upgrade to Premium for unlimited access!",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (ingredients.length === 0) {
+      toast({
+        title: "Add Some Ingredients",
+        description: "Please add at least one ingredient to generate recipes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Track usage for non-premium users
+      if (!isPremium) {
+        await supabase.functions.invoke('track-usage');
+      }
+
+      // TODO: Connect to OpenAI API to generate recipes
+      console.log("Generating recipes with ingredients:", ingredients);
+      
+      // Update usage after successful generation
+      await checkUserAndUsage();
+      
+      toast({
+        title: "Recipes Generated! 🎉",
+        description: `Created delicious recipes using your ${ingredients.length} ingredients.`,
+      });
+
+    } catch (error) {
+      console.error('Recipe generation error:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate recipes. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sampleCombos = [
+    "Rice + Beans + Onion",
+    "Pasta + Tomato + Garlic", 
+    "Chicken + Vegetables + Herbs"
+  ];
 
   return (
-    <section className="py-16 px-4">
+    <section className="py-16 px-4" id="ingredients">
       <div className="container mx-auto max-w-2xl">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-primary-soft/50 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
-            <ChefHat className="w-4 h-4" />
+          <Badge variant="secondary" className="mb-4">
+            <ChefHat className="w-4 h-4 mr-2" />
             AI Recipe Generator
-          </div>
+          </Badge>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             What's in Your Fridge?
           </h2>
@@ -48,8 +172,8 @@ const IngredientInput = () => {
 
         <Card className="shadow-fresh border-primary/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-secondary" />
+            <CardTitle className="flex items-center">
+              <Sparkles className="w-5 h-5 text-secondary mr-2" />
               Your Ingredients
             </CardTitle>
             <CardDescription>
@@ -57,24 +181,69 @@ const IngredientInput = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Input Section */}
             <div className="flex gap-2">
               <Input
-                placeholder="Enter an ingredient (e.g., rice, chicken, tomato)"
+                type="text"
+                placeholder="e.g., tomatoes, onions, chicken..."
                 value={currentIngredient}
                 onChange={(e) => setCurrentIngredient(e.target.value)}
                 onKeyPress={handleKeyPress}
                 className="flex-1"
+                disabled={loading}
               />
-              <Button 
-                onClick={addIngredient} 
-                variant="soft" 
-                size="default"
-                disabled={!currentIngredient.trim()}
-              >
+              <Button onClick={addIngredient} variant="outline" size="default" disabled={loading}>
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
+
+            {/* Usage Status */}
+            {user && (
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    {isPremium ? (
+                      <>
+                        <Crown className="w-4 h-4 text-primary mr-2" />
+                        <span className="text-sm font-medium">Premium: Unlimited Recipes</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-muted-foreground mr-2" />
+                        <span className="text-sm">Free Plan: {remaining}/3 recipes today</span>
+                      </>
+                    )}
+                  </div>
+                  {!isPremium && remaining === 0 && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => window.location.href = '/pricing'}
+                    >
+                      <Crown className="w-3 h-3 mr-1" />
+                      Upgrade
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!user && (
+              <div className="mt-4 p-3 bg-primary-soft rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Lock className="w-4 h-4 text-primary mr-2" />
+                    <span className="text-sm text-primary">Sign in to generate recipes</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => window.location.href = '/auth'}
+                  >
+                    Sign In
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Ingredients Display */}
             {ingredients.length > 0 && (
@@ -84,42 +253,52 @@ const IngredientInput = () => {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {ingredients.map((ingredient, index) => (
-                    <div
-                      key={index}
-                      className="inline-flex items-center gap-2 bg-primary-soft text-primary px-3 py-1 rounded-full text-sm"
-                    >
+                    <Badge key={index} variant="secondary" className="text-sm">
                       {ingredient}
                       <button
                         onClick={() => removeIngredient(ingredient)}
-                        className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                        className="ml-2 hover:text-destructive"
                       >
                         <X className="w-3 h-3" />
                       </button>
-                    </div>
+                    </Badge>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Generate Button */}
-            <div className="pt-4">
-              <Button
-                onClick={handleGenerateRecipes}
-                variant="fresh"
-                size="lg"
-                className="w-full"
-                disabled={ingredients.length === 0}
-              >
-                <Sparkles className="w-5 h-5" />
-                Generate Recipes ({ingredients.length} ingredients)
-              </Button>
-              
-              {ingredients.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground mt-2">
-                  Add at least one ingredient to get started
-                </p>
+          {ingredients.length > 0 && (
+            <Button 
+              onClick={handleGenerateRecipes} 
+              variant={!user || (!canGenerate && !isPremium) ? "secondary" : "hero"}
+              size="lg" 
+              className="w-full group"
+              disabled={loading || (!user || (!canGenerate && !isPremium))}
+            >
+              {loading ? (
+                <>
+                  <ChefHat className="w-5 h-5 mr-2 animate-spin" />
+                  Generating Recipes...
+                </>
+              ) : !user ? (
+                <>
+                  <Lock className="w-5 h-5 mr-2" />
+                  Sign In to Generate Recipes
+                </>
+              ) : !canGenerate && !isPremium ? (
+                <>
+                  <Crown className="w-5 h-5 mr-2" />
+                  Upgrade for More Recipes
+                </>
+              ) : (
+                <>
+                  <ChefHat className="w-5 h-5 mr-2 group-hover:animate-bounce" />
+                  Generate Delicious Recipes
+                  <Sparkles className="w-4 h-4 ml-2 group-hover:animate-pulse" />
+                </>
               )}
-            </div>
+            </Button>
+          )}
           </CardContent>
         </Card>
 
@@ -127,12 +306,12 @@ const IngredientInput = () => {
         <div className="mt-8 text-center">
           <p className="text-sm text-muted-foreground mb-3">Try these popular combinations:</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {["Rice + Beans + Onion", "Pasta + Tomato + Garlic", "Chicken + Vegetables + Herbs"].map((combo, index) => (
+            {sampleCombos.map((combo, index) => (
               <button
                 key={index}
                 onClick={() => {
-                  const newIngredients = combo.split(" + ").map(ing => ing.toLowerCase())
-                  setIngredients(prev => [...new Set([...prev, ...newIngredients])])
+                  const newIngredients = combo.split(" + ").map(ing => ing.toLowerCase());
+                  setIngredients(prev => [...new Set([...prev, ...newIngredients])]);
                 }}
                 className="text-xs bg-accent hover:bg-accent/80 text-accent-foreground px-3 py-1 rounded-full transition-colors"
               >
@@ -143,7 +322,7 @@ const IngredientInput = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default IngredientInput
+export default IngredientInput;
