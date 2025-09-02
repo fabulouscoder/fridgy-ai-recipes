@@ -125,22 +125,40 @@ const IngredientInput = () => {
         await supabase.functions.invoke('track-usage');
       }
 
-      // TODO: Connect to OpenAI API to generate recipes
-      console.log("Generating recipes with ingredients:", ingredients);
-      
-      // Update usage after successful generation
-      await checkUserAndUsage();
-      
-      toast({
-        title: "Recipes Generated! 🎉",
-        description: `Created delicious recipes using your ${ingredients.length} ingredients.`,
+      // Generate recipes using AI
+      const { data, error } = await supabase.functions.invoke('generate-recipes', {
+        body: { ingredients }
       });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to generate recipes');
+      }
+
+      if (data?.recipes) {
+        // Update usage after successful generation
+        await checkUserAndUsage();
+        
+        toast({
+          title: "Recipes Generated! 🎉",
+          description: `Created ${data.recipes.length} delicious recipes using your ingredients!`,
+        });
+
+        // Store recipes in localStorage for RecipeResults component to display
+        localStorage.setItem('generatedRecipes', JSON.stringify(data.recipes));
+        localStorage.setItem('usedIngredients', JSON.stringify(ingredients));
+        
+        // Scroll to recipe results section
+        const resultsElement = document.getElementById('recipe-results');
+        if (resultsElement) {
+          resultsElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
 
     } catch (error) {
       console.error('Recipe generation error:', error);
       toast({
         title: "Generation Failed",
-        description: "Failed to generate recipes. Please try again.",
+        description: error.message || "Failed to generate recipes. Please try again.",
         variant: "destructive",
       });
     } finally {

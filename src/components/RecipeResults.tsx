@@ -1,90 +1,170 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button-enhanced"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Users, BookmarkPlus, Share2, ChefHat } from "lucide-react"
+import { Clock, Users, BookmarkPlus, Share2, ChefHat, Heart, ExternalLink } from "lucide-react"
+import { useToast } from "@/hooks/use-toast";
 
-// Mock recipe data - this will come from the AI API
-const mockRecipes = [
-  {
-    id: 1,
-    title: "Mediterranean Vegetable Rice Bowl",
-    cookingTime: "25 mins",
-    servings: 4,
-    difficulty: "Easy",
-    ingredients: ["Rice", "Tomatoes", "Onions", "Bell peppers", "Olive oil", "Herbs"],
-    instructions: [
-      "Heat olive oil in a large pan over medium heat",
-      "Sauté onions until translucent (3-4 minutes)",
-      "Add bell peppers and cook for 5 minutes",
-      "Stir in rice and tomatoes, season with herbs",
-      "Add 2 cups water, bring to boil, then simmer for 15 minutes",
-      "Let rest for 5 minutes before serving"
-    ],
-    nutrition: {
-      calories: 320,
-      protein: "8g",
-      carbs: "65g",
-      fat: "6g"
-    }
-  },
-  {
-    id: 2,
-    title: "Quick Vegetable Stir-Fry",
-    cookingTime: "15 mins",
-    servings: 2,
-    difficulty: "Easy",
-    ingredients: ["Bell peppers", "Onions", "Garlic", "Soy sauce", "Oil", "Rice"],
-    instructions: [
-      "Heat oil in wok or large pan over high heat",
-      "Add garlic and onions, stir-fry for 1 minute",
-      "Add bell peppers, cook for 3-4 minutes until crisp-tender",
-      "Add soy sauce and toss to combine",
-      "Serve immediately over cooked rice"
-    ],
-    nutrition: {
-      calories: 280,
-      protein: "6g",
-      carbs: "52g",
-      fat: "8g"
-    }
-  },
-  {
-    id: 3,
-    title: "Rustic Roasted Vegetable Medley",
-    cookingTime: "35 mins",
-    servings: 6,
-    difficulty: "Medium",
-    ingredients: ["Mixed vegetables", "Olive oil", "Herbs", "Salt", "Pepper"],
-    instructions: [
-      "Preheat oven to 425°F (220°C)",
-      "Cut vegetables into uniform pieces",
-      "Toss with olive oil, herbs, salt, and pepper",
-      "Spread on baking sheet in single layer",
-      "Roast for 25-30 minutes until tender and caramelized",
-      "Serve hot as a side dish or main course"
-    ],
-    nutrition: {
-      calories: 180,
-      protein: "4g",
-      carbs: "28g",
-      fat: "7g"
-    }
-  }
-]
+interface Recipe {
+  title: string;
+  ingredients: string[];
+  instructions: string[];
+  cooking_time: string;
+  servings: number;
+  difficulty: string;
+  nutrition?: {
+    calories?: number;
+    protein?: string;
+    carbs?: string;
+    fat?: string;
+  };
+}
 
 const RecipeResults = () => {
-  const handleSaveRecipe = (recipeId: number) => {
-    // This will connect to Supabase once set up
-    console.log("Saving recipe:", recipeId)
-  }
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [usedIngredients, setUsedIngredients] = useState<string[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const { toast } = useToast();
 
-  const handleShareRecipe = (recipeId: number) => {
-    // Share functionality
-    console.log("Sharing recipe:", recipeId)
+  useEffect(() => {
+    // Get user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    // Load generated recipes from localStorage
+    const loadRecipes = () => {
+      const storedRecipes = localStorage.getItem('generatedRecipes');
+      const storedIngredients = localStorage.getItem('usedIngredients');
+      
+      if (storedRecipes) {
+        try {
+          setRecipes(JSON.parse(storedRecipes));
+        } catch (error) {
+          console.error('Error parsing stored recipes:', error);
+        }
+      }
+      
+      if (storedIngredients) {
+        try {
+          setUsedIngredients(JSON.parse(storedIngredients));
+        } catch (error) {
+          console.error('Error parsing stored ingredients:', error);
+        }
+      }
+    };
+
+    loadRecipes();
+    
+    // Listen for storage changes (when new recipes are generated)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'generatedRecipes' || e.key === 'usedIngredients') {
+        loadRecipes();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check for changes periodically (for same-tab updates)
+    const interval = setInterval(loadRecipes, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const saveRecipe = async (recipe: Recipe) => {
+    if (!user) {
+      toast({
+        title: "Sign In Required",
+        description: "Please sign in to save recipes.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('saved_recipes')
+        .insert({
+          user_id: user.id,
+          title: recipe.title,
+          ingredients: recipe.ingredients,
+          instructions: recipe.instructions,
+          cooking_time: recipe.cooking_time,
+          servings: recipe.servings,
+          difficulty: recipe.difficulty,
+          nutrition: recipe.nutrition || null
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Recipe Saved! ✨",
+        description: `"${recipe.title}" has been saved to your collection.`,
+      });
+
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      toast({
+        title: "Save Failed",
+        description: "Could not save the recipe. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const shareRecipe = async (recipe: Recipe) => {
+    const shareData = {
+      title: `${recipe.title} - Fridgy Recipe`,
+      text: `Check out this amazing recipe: ${recipe.title}\n\nIngredients: ${recipe.ingredients.join(', ')}\n\nGenerated by Fridgy AI`,
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback to copying to clipboard
+        const recipeText = `${recipe.title}\n\nIngredients:\n${recipe.ingredients.map(ing => `• ${ing}`).join('\n')}\n\nInstructions:\n${recipe.instructions.map((inst, i) => `${i + 1}. ${inst}`).join('\n')}\n\nCooking Time: ${recipe.cooking_time}\nServings: ${recipe.servings}\nDifficulty: ${recipe.difficulty}`;
+        
+        await navigator.clipboard.writeText(recipeText);
+        toast({
+          title: "Recipe Copied! 📋",
+          description: "Recipe has been copied to your clipboard.",
+        });
+      }
+    } catch (error) {
+      console.error('Error sharing recipe:', error);
+      toast({
+        title: "Share Failed",
+        description: "Could not share the recipe. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty?.toLowerCase()) {
+      case 'easy':
+        return 'bg-green-100 text-green-700 border-green-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case 'hard':
+        return 'bg-red-100 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
+    }
+  };
+
+  if (recipes.length === 0) {
+    return null; // Don't render if no recipes
   }
 
   return (
-    <section className="py-16 px-4 bg-accent/20">
+    <section className="py-16 px-4 bg-accent/20" id="recipe-results">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-secondary-soft/50 text-secondary px-4 py-2 rounded-full text-sm font-medium mb-6">
@@ -94,14 +174,21 @@ const RecipeResults = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Perfect Recipes for Your Ingredients
           </h2>
-          <p className="text-lg text-muted-foreground">
-            Here are personalized recipes created just for you
+          <p className="text-lg text-muted-foreground mb-4">
+            Here are personalized recipes created just for you using: 
           </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {usedIngredients.map((ingredient, index) => (
+              <Badge key={index} variant="outline" className="text-sm">
+                {ingredient}
+              </Badge>
+            ))}
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockRecipes.map((recipe) => (
-            <Card key={recipe.id} className="shadow-warm hover:shadow-fresh transition-all duration-300 transform hover:-translate-y-1">
+          {recipes.map((recipe, index) => (
+            <Card key={index} className="shadow-warm hover:shadow-fresh transition-all duration-300 transform hover:-translate-y-1">
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -112,7 +199,7 @@ const RecipeResults = () => {
                       A delicious meal using your available ingredients
                     </CardDescription>
                   </div>
-                  <Badge variant="secondary" className="ml-2">
+                  <Badge className={`ml-2 ${getDifficultyColor(recipe.difficulty)}`}>
                     {recipe.difficulty}
                   </Badge>
                 </div>
@@ -120,7 +207,7 @@ const RecipeResults = () => {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mt-3">
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    {recipe.cookingTime}
+                    {recipe.cooking_time}
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
@@ -134,8 +221,8 @@ const RecipeResults = () => {
                 <div>
                   <h4 className="font-medium text-sm mb-2">Ingredients:</h4>
                   <div className="flex flex-wrap gap-1">
-                    {recipe.ingredients.slice(0, 4).map((ingredient, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
+                    {recipe.ingredients.slice(0, 4).map((ingredient, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
                         {ingredient}
                       </Badge>
                     ))}
@@ -147,17 +234,38 @@ const RecipeResults = () => {
                   </div>
                 </div>
 
-                {/* Nutrition */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="bg-accent/50 p-2 rounded text-center">
-                    <div className="font-medium">{recipe.nutrition.calories}</div>
-                    <div className="text-muted-foreground">calories</div>
-                  </div>
-                  <div className="bg-accent/50 p-2 rounded text-center">
-                    <div className="font-medium">{recipe.nutrition.protein}</div>
-                    <div className="text-muted-foreground">protein</div>
-                  </div>
+                {/* Instructions Preview */}
+                <div>
+                  <h4 className="font-medium text-sm mb-2">Instructions:</h4>
+                  <ol className="text-xs text-muted-foreground space-y-1">
+                    {recipe.instructions.slice(0, 2).map((step, i) => (
+                      <li key={i}>
+                        {i + 1}. {step.substring(0, 60)}{step.length > 60 ? '...' : ''}
+                      </li>
+                    ))}
+                    {recipe.instructions.length > 2 && (
+                      <li className="text-muted-foreground">+ {recipe.instructions.length - 2} more steps...</li>
+                    )}
+                  </ol>
                 </div>
+
+                {/* Nutrition */}
+                {recipe.nutrition && (
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {recipe.nutrition.calories && (
+                      <div className="bg-accent/50 p-2 rounded text-center">
+                        <div className="font-medium">{recipe.nutrition.calories}</div>
+                        <div className="text-muted-foreground">calories</div>
+                      </div>
+                    )}
+                    {recipe.nutrition.protein && (
+                      <div className="bg-accent/50 p-2 rounded text-center">
+                        <div className="font-medium">{recipe.nutrition.protein}</div>
+                        <div className="text-muted-foreground">protein</div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-2">
@@ -165,7 +273,7 @@ const RecipeResults = () => {
                     variant="fresh" 
                     size="sm" 
                     className="flex-1"
-                    onClick={() => handleSaveRecipe(recipe.id)}
+                    onClick={() => saveRecipe(recipe)}
                   >
                     <BookmarkPlus className="w-4 h-4" />
                     Save
@@ -173,7 +281,7 @@ const RecipeResults = () => {
                   <Button 
                     variant="soft" 
                     size="sm"
-                    onClick={() => handleShareRecipe(recipe.id)}
+                    onClick={() => shareRecipe(recipe)}
                   >
                     <Share2 className="w-4 h-4" />
                   </Button>
@@ -183,12 +291,26 @@ const RecipeResults = () => {
           ))}
         </div>
 
-        {/* Generate More Button */}
-        <div className="text-center mt-8">
-          <Button variant="warm" size="lg">
-            Generate More Recipes
-          </Button>
-        </div>
+        {/* Action Buttons */}
+        {user && (
+          <div className="text-center mt-8 space-x-4">
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.href = '/saved-recipes'}
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              View Saved Recipes
+            </Button>
+            <Button 
+              variant="warm" 
+              size="lg"
+              onClick={() => window.location.href = '/pricing'}
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Upgrade for Unlimited Recipes
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   )
