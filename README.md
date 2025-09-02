@@ -1,3 +1,6 @@
+Deployment Link
+https://fridgy-ai-recipes.lovable.app
+
 # Fridgy - Smart Fridge Buddy 🥗
 
 Turn your leftovers into delicious meals. Save money. Reduce waste. Stay healthy.
