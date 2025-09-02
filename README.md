@@ -151,7 +151,7 @@ To enable full functionality (authentication, database, AI features), connect to
 
 ## 👥 Team
 
-This project was built for Vibe Coding Hackathon Name. Add your team members below:
+This project was built for Vibe Coding Hackathon Name. 
 
 ### Team Members
 - **OBINNA OSAKWE** - Technical Lead - obinnaosakwe1@gmail.com - +2349134701358
