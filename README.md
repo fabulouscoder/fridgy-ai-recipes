@@ -1,4 +1,4 @@
-Deployment Link
+# Deployment Link 
 https://fridgy-ai-recipes.lovable.app
 
 # Fridgy - Smart Fridge Buddy 🥗
