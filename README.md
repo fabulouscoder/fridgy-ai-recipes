@@ -151,13 +151,11 @@ To enable full functionality (authentication, database, AI features), connect to
 
 ## 👥 Team
 
-This project was built for [Hackathon Name]. Add your team members below:
+This project was built for Vibe Coding Hackathon Name. Add your team members below:
 
 ### Team Members
-- **[Your Name]** - [Role] - [Email]
-- **[Team Member 2]** - [Role] - [Email]
-- **[Team Member 3]** - [Role] - [Email]
-- **[Team Member 4]** - [Role] - [Email]
+- **OBINNA OSAKWE** - Technical Lead - obinnaosakwe1@gmail.com - +2349134701358
+- **RAMOTA OMOWUNMI OGUNDELE** - Project Manager - ogundele.ramo@gmail.com - +2348061444449
 
 ### Roles
 - **Frontend Developer** - React/TypeScript development
