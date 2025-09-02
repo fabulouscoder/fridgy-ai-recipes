@@ -151,7 +151,7 @@ To enable full functionality (authentication, database, AI features), connect to
 
 ## 👥 Team
 
-This project was built for Vibe Coding Hackathon Name. 
+This project was built for Vibe Coding Hackathon. 
 
 ### Team Members
 - **OBINNA OSAKWE** - Technical Lead - obinnaosakwe1@gmail.com - +2349134701358
@@ -166,15 +166,6 @@ This project was built for Vibe Coding Hackathon Name.
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributors
-OBINNA OSAKWE
-obinnaosakwe1@gmail.com
-+2349134701358
-
-RAMOTA OMOWUNMI OGUNDELE 
-ogundele.ramo@gmail.com
-+2348061444449
 
 ## 📞 Support
 
