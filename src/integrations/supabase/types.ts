@@ -52,6 +52,48 @@ export type Database = {
           },
         ]
       }
+      saved_recipes: {
+        Row: {
+          cooking_time: string
+          created_at: string
+          difficulty: string | null
+          id: string
+          ingredients: string[]
+          instructions: string[]
+          nutrition: Json | null
+          servings: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cooking_time: string
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          ingredients: string[]
+          instructions: string[]
+          nutrition?: Json | null
+          servings?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cooking_time?: string
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          ingredients?: string[]
+          instructions?: string[]
+          nutrition?: Json | null
+          servings?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           amount: number
@@ -92,6 +134,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      usage_tracking: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          recipe_generations: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          recipe_generations?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          recipe_generations?: number | null
+          user_id?: string
+        }
+        Relationships: []
       }
       users: {
         Row: {
